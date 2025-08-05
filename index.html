@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>透明 WebView 浏览器</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: transparent;
+      overflow: hidden;
+      -webkit-user-select: none;
+    }
+
+    #toolbar {
+      height: 44px;
+      background-color: white;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      gap: 10px;
+      opacity: 1;
+    }
+
+    #toolbar input,
+    #toolbar button {
+      height: 26px;
+      -webkit-app-region: no-drag;
+    }
+
+    #urlInput {
+      flex: 1;
+      padding: 2px 6px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    #drag-region {
+      width: 20px;
+      height: 100%;
+      -webkit-app-region: drag;
+      cursor: move;
+    }
+
+    #browser {
+      width: 100%;
+      height: calc(100% - 44px);
+    }
+
+    webview {
+      width: 100%;
+      height: 100%;
+      border: none;
+      opacity: 1;
+      background: transparent;
+    }
+
+    button {
+      padding: 0 10px;
+      border: 1px solid #aaa;
+      border-radius: 4px;
+      background: #f2f2f2;
+      cursor: pointer;
+    }
+
+    button.active {
+      background-color: #d0eaff;
+      font-weight: bold;
+    }
+
+  </style>
+</head>
+
+<body>
+  <div id="toolbar">
+    <div id="drag-region"></div>
+
+    <button id="backBtn">←</button>
+    <button id="forwardBtn">→</button>
+
+    <input type="text" id="urlInput" placeholder="https://google.com">
+    <button id="goButton">跳转</button>
+
+    <input type="range" id="opacityRange" min="0.1" max="1" step="0.01" value="1" title="透明度">
+
+    <button id="pinBtn">置顶</button>
+    <button id="closeBtn">关闭</button>
+
+    <!-- 颜色设置 -->
+    <input type="color" id="toolbarColor" title="设置工具栏颜色">
+  </div>
+
+  <div id="browser">
+    <webview id="webview" src="https://google.com/" allowpopups></webview>
+  </div>
+
+  <script>
+    const slider = document.getElementById('opacityRange');
+    const webview = document.getElementById('webview');
+    const toolbar = document.getElementById('toolbar');
+    const urlInput = document.getElementById('urlInput');
+    const goButton = document.getElementById('goButton');
+    const backBtn = document.getElementById('backBtn');
+    const forwardBtn = document.getElementById('forwardBtn');
+    const pinBtn = document.getElementById('pinBtn');
+    const clickThroughBtn = document.getElementById('clickThroughBtn');
+    const colorInput = document.getElementById('toolbarColor');
+
+    let isPinned = false;
+    let isClickThrough = false;
+
+    function updateOpacity(value) {
+      window.api.setOpacity(value);
+      webview.style.opacity = value;
+      toolbar.style.opacity = value;
+    }
+
+    slider.addEventListener('input', () => {
+      const value = parseFloat(slider.value);
+      updateOpacity(value);
+    });
+
+
+    goButton.addEventListener('click', () => {
+      let url = urlInput.value.trim();
+      if (!/^https?:\/\//.test(url)) {
+        url = 'https://' + url;
+      }
+      webview.src = url;
+    });
+
+    urlInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') goButton.click();
+    });
+
+    backBtn.addEventListener('click', () => {
+      if (webview.canGoBack()) webview.goBack();
+    });
+
+    forwardBtn.addEventListener('click', () => {
+      if (webview.canGoForward()) webview.goForward();
+    });
+
+    pinBtn.addEventListener('click', () => {
+      isPinned = !isPinned;
+      window.api.setAlwaysOnTop(isPinned);
+      pinBtn.classList.toggle('active', isPinned);
+    });
+
+    const closeBtn = document.getElementById('closeBtn');
+
+    closeBtn.addEventListener('click', () => {
+      window.api.closeWindow();
+    });
+
+    // 修改工具栏背景色
+    colorInput.addEventListener('input', () => {
+      toolbar.style.backgroundColor = colorInput.value;
+    });
+
+    window.api.onUrlOpen((url) => {
+      console.log(url);
+      const webview = document.getElementById('webview');
+      if (webview) {
+        webview.loadURL(url);
+      }
+    });
+  </script>
+</body>
+
+</html>
