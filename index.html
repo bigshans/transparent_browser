@@ -14,6 +14,9 @@
       overflow: hidden;
       -webkit-user-select: none;
     }
+    :root {
+      --opacity: 1;
+    }
 
     #toolbar {
       height: 44px;
@@ -22,7 +25,7 @@
       align-items: center;
       padding: 0 10px;
       gap: 10px;
-      opacity: 1;
+      opacity: var(--opacity, 1);
     }
 
     #toolbar input,
@@ -55,7 +58,7 @@
       width: 100%;
       height: 100%;
       border: none;
-      opacity: 1;
+      opacity: var(--opacity, 1);
       background: transparent;
     }
 
@@ -109,14 +112,17 @@
     const pinBtn = document.getElementById('pinBtn');
     const clickThroughBtn = document.getElementById('clickThroughBtn');
     const colorInput = document.getElementById('toolbarColor');
+    const savedOpacity = parseFloat(localStorage.getItem('opacity') || '1');
+    updateOpacity(savedOpacity);
 
     let isPinned = false;
     let isClickThrough = false;
 
     function updateOpacity(value) {
       window.api.setOpacity(value);
-      webview.style.opacity = value;
-      toolbar.style.opacity = value;
+      const root = document.querySelector(':root');
+      root.style.setProperty('--opacity', value || '1');
+      localStorage.setItem('opacity', value);
     }
 
     slider.addEventListener('input', () => {
@@ -128,7 +134,8 @@
     goButton.addEventListener('click', () => {
       let url = urlInput.value.trim();
       if (!/^https?:\/\//.test(url)) {
-        url = 'https://' + url;
+        // url = 'https://' + url;
+        url = 'https://www.google.com/search?q=' + encodeURIComponent(url);
       }
       webview.src = url;
     });
